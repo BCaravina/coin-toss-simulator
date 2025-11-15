@@ -1,6 +1,16 @@
+import time
+import pandas as pd
 import scipy.stats
 import streamlit as st
-import time
+
+# criando os session states para compilar as médias de cada lançamentos e criar um dataframe
+if "experiment_no" not in st.session_state:
+    st.session_state["experiment_no"] = 0
+
+if "df_experiment_results" not in st.session_state:
+    st.session_state["df_experiment_results"] = pd.DataFrame(
+        columns=["no", "iterations", "mean"]
+    )
 
 st.header("Jogando uma moeda")
 
@@ -27,12 +37,27 @@ def toss_coin(n):
     return mean
 
 
-# adicionando controle deslizante para selecionar qtde de tentativas
+# adicionando controle deslizante para selecionar a quantidade de tentativas
 number_of_trials = st.slider("Número de tentativas?", 1, 1000, 10)
 start_button = st.button("Executar")
 
 if start_button:
     st.write(f"Executando o experimento de {number_of_trials} tentativas.")
+    st.session_state["experiment_no"] += 1
     mean = toss_coin(number_of_trials)
+    # adicionando a tabela de tentativas e médias à tela
+    st.session_state["df_experiment_results"] = pd.concat(
+        [
+            st.session_state["df_experiment_results"],
+            pd.DataFrame(
+                data=[[st.session_state["experiment_no"], number_of_trials, mean]],
+                columns=["no", "iterations", "mean"],
+            ),
+        ],
+        axis=0,
+    )
+    st.session_state["df_experiment_results"] = st.session_state[
+        "df_experiment_results"
+    ].reset_index(drop=True)
 
-st.write("Ainda não é um aplicativo funcional. Em construção.")
+st.write(st.session_state["df_experiment_results"])
